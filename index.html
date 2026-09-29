@@ -1014,9 +1014,9 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
         aiBusy=true;const button=$('generateBtn'),label=button.textContent;button.disabled=true;button.setAttribute('aria-busy','true');
         const product={...state.product},avoid=[];
         try{
-          for(let start=0;start<120;start+=10){
+          for(let start=0;start<120;start+=Math.min(aiBatchSize(4),120-start)){
             button.textContent=`AI sedang bina dialog unik… ${start}/120`;
-            const contexts=Array.from({length:Math.min(10,120-start)},(_,i)=>{
+            const contexts=Array.from({length:Math.min(aiBatchSize(4),120-start)},(_,i)=>{
               const idea=makeIdea(start+i);
               return {variationId:idea.id+1,day:Math.floor(idea.id/4)+1,slot:idea.id%4+1,flow:idea.structure,angle:idea.angle,style:idea.style,duration:32,engine:product.platform,
                 parts:Array.from({length:4},(_,part)=>({stage:part===0?'Hook':part===3?'CTA':'Detail',scene:`Topic: ${product.product}. Storyline: ${idea.structure}. Opening visual: ${idea.visual}. Part ${part+1}/4. ${part===3?'End with engagement matching content goal.':'Continue the same story, no final CTA yet.'}`}))};
@@ -2418,7 +2418,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
       const aiCache=new Map();
       const aiStatus=document.createElement('p');aiStatus.setAttribute('role','status');aiStatus.setAttribute('aria-live','polite');
       $('batchGenerate').after(aiStatus);
-      const aiInfo=document.createElement('p');aiInfo.className='simple-hint';aiInfo.textContent='OpenAI jana dialog dalam kumpulan 10 idea: 120 idea setiap set. Setiap part 8 saat, 15–25 perkataan. Jika AI gagal, hasil templat tempatan akan dilabel. Tekan jana semula dengan input sama untuk sambung AI. Sejarah disimpan dalam browser ini.';aiStatus.after(aiInfo);aiStatus.style.flexBasis='100%';aiInfo.style.flexBasis='100%';
+      const aiInfo=document.createElement('p');aiInfo.className='simple-hint';aiInfo.textContent='OpenAI jana dialog dalam kumpulan kecil ikut durasi supaya setiap part lebih lengkap: 120 idea setiap set. Setiap part 8 saat, 15–25 perkataan. Jika AI gagal, hasil templat tempatan akan dilabel. Tekan jana semula dengan input sama untuk sambung AI. Sejarah disimpan dalam browser ini.';aiStatus.after(aiInfo);aiStatus.style.flexBasis='100%';aiInfo.style.flexBasis='100%';
       let aiBusy=false,aiDBPromise,aiStorageWarning=false;
       const aiMemory=new Map();
       function aiDB(){return aiDBPromise||=new Promise((resolve,reject)=>{const req=indexedDB.open('planny-openai-v1',1);req.onblocked=()=>reject(Error('Storan browser sibuk.'));req.onupgradeneeded=()=>req.result.createObjectStore('products');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(Error('Browser tidak membenarkan simpanan hasil. Benarkan storan dahulu.'));});}
@@ -2435,6 +2435,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
       const aiSignature=text=>text.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,'').replace(/\s+/g,' ').trim();
       const aiWords=text=>text.trim().split(/\s+/u).filter(x=>/[\p{L}\p{N}]/u.test(x)).length;
       const aiValidDialogue=text=>typeof text==='string'&&aiWords(text)>=15&&aiWords(text)<=25;
+      const aiBatchSize=parts=>Math.max(2,Math.min(10,Math.floor(24/Math.max(1,parts))));
       const aiErrors={MISSING_API_KEY:'OPENAI_API_KEY belum ditetapkan di Vercel.',OPENAI_AUTH:'API key OpenAI tidak sah.',OPENAI_MODEL_ACCESS:'Model OpenAI tidak tersedia atau akaun tiada akses.',OPENAI_RATE_LIMIT:'Kredit atau rate limit OpenAI telah dicapai.',OPENAI_TIMEOUT:'OpenAI mengambil masa terlalu lama. Cuba semula.',INVALID_AI_OUTPUT:'Sebahagian dialog tidak menepati format 15–25 perkataan. Cuba semula.',OPENAI_UNAVAILABLE:'OpenAI tidak dapat dihubungi sekarang.'};
       function aiErrorMessage(error){return error.name==='TimeoutError'||error.name==='AbortError'?aiErrors.OPENAI_TIMEOUT:error.message||aiErrors[error.code]||aiErrors.OPENAI_UNAVAILABLE;}
       const aiBaseExpanded=batchExpanded;
@@ -2467,9 +2468,9 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
         const hookModes=['soalan terus','pemerhatian harian','detail produk dahulu','situasi pelanggan','pilihan ikut keperluan','rasa ingin tahu','perbandingan keperluan tanpa pesaing','ajak perhatikan','jawab keraguan','cerita situasi ringkas'];
         const approaches=['mesra ringkas','bersahaja yakin','empati lembut','ceria sederhana','tenang membantu','praktikal terus','reflektif','santai bersembang','teruja terkawal','jelas meyakinkan'];
         try{
-        for(let start=pending.ideas.length;start<120;start+=10){
+        for(let start=pending.ideas.length;start<120;start+=Math.min(aiBatchSize(Math.max(1,Math.round((opts.duration||8)/8))),120-start)){
           aiStatus.textContent=`Produk ${position}/${total}: ${product.product} · Set ${pending.set}/100 · ${start}/120 idea siap. OpenAI sedang menulis…`;
-          const contexts=Array.from({length:Math.min(10,120-start)},(_,i)=>{
+          const contexts=Array.from({length:Math.min(aiBatchSize(Math.max(1,Math.round((opts.duration||8)/8))),120-start)},(_,i)=>{
             const index=start+i,context=aiBaseExpanded(product,Math.floor(index/4),index%4,engine,opts);
             const variationId=(pending.set-1)*120+index+1;
             const direction=`\nVARIATION ${variationId}/12000. Hook: ${hookModes[(pending.set-1)%10]}. Delivery: ${approaches[Math.floor((pending.set-1)/10)]}. Give this idea a distinct natural Malay KL sales narrative consistent with this image and video. Facts override creative direction.`;

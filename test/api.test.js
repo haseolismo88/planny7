@@ -83,6 +83,21 @@ test('1 and 10 ideas at 8, 32 and 56 seconds; repair only bad parts across three
   }
  }finally{if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
 });
+test('maps explicit numbered parts and repairs only a missing part',async()=>{
+ const key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='test-only';
+ try{
+  const payload={...body,ideas:[{...body.ideas[0],duration:24,parts:[{scene:'A'},{scene:'B'},{scene:'C'}]}]};
+  let calls=0;
+  const result=await run(fake(async request=>{
+   calls++;const input=JSON.parse(request.input);
+   if(calls===1)return {status:'completed',output_text:JSON.stringify({ideas:[{id:1,parts:[{number:3,dialogue:makeLine(18,'p3')},{number:1,dialogue:makeLine(18,'p1')}]}]})};
+   assert.deepEqual(input.ideas[0].parts.map(p=>p.number),[2]);
+   return {status:'completed',output_text:JSON.stringify({ideas:[{id:1,parts:[{number:2,dialogue:makeLine(18,'p2')}]}]})};
+  }),{body:payload});
+  assert.equal(result.code,200);assert.equal(calls,2);
+  assert.deepEqual(result.data.ideas[0].dialogues,[makeLine(18,'p1'),makeLine(18,'p2'),makeLine(18,'p3')]);
+ }finally{if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
+});
 test('accepts reordered valid ideas and repairs only unresolved ideas',async()=>{
  const key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='test-only';
  try{
