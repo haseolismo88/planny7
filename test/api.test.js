@@ -83,6 +83,22 @@ test('1 and 10 ideas at 8, 32 and 56 seconds; repair only bad parts across three
   }
  }finally{if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
 });
+test('accepts reordered valid ideas and repairs only unresolved ideas',async()=>{
+ const key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='test-only';
+ try{
+  const payload={...body,ideas:[body.ideas[0],{...body.ideas[0],id:2}]};
+  let calls=0;
+  const result=await run(fake(async request=>{
+   calls++;const input=JSON.parse(request.input);
+   if(calls===1)return {status:'completed',output_text:JSON.stringify({ideas:[{id:2,dialogues:['too short']},{id:1,dialogues:[line]}]})};
+   assert.deepEqual(input.ideas.map(i=>i.id),[2]);
+   return {status:'completed',output_text:JSON.stringify({ideas:[{id:2,dialogues:[makeLine(18,2)]}]})};
+  }),{body:payload});
+  assert.equal(result.code,200);assert.equal(calls,2);
+  assert.equal(result.data.ideas[0].dialogues[0],line);
+  assert.equal(result.data.ideas[1].dialogues[0],makeLine(18,2));
+ }finally{if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
+});
 test('repair duplicates, wrong IDs and wrong part counts without replacing valid ideas',async()=>{
  const key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='test-only';
  try{
