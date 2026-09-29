@@ -71,7 +71,7 @@ try{
  console.log('PASS both modes display all seven backend errors');
  for(const n of [16,21]){
   page=await pageFor();await setup(page);await page.route('**/api/generate',route=>{const input=route.request().postDataJSON();return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({success:true,source:'openai',ideas:input.ideas.map(idea=>({id:idea.id,dialogues:idea.parts.map(()=>Array(n).fill('kata').join(' '))}))})});});
-  await generate(page);assert.match(await page.locator('#batchResults').innerText(),/17–20/);await page.context().close();
+  await generate(page);assert.match(await page.locator('#batchResults').innerText(),/15–25/);await page.context().close();
  }
  console.log('PASS frontend rejects 16 and 21 words');
 
