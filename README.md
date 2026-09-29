@@ -16,6 +16,14 @@ Projek lengkap untuk GitHub/Vercel. Reka bentuk, 30 hari × 4 idea, pilihan gaya
 
 ## Deploy
 
+### Schema lengkap untuk dialog
+
+Respons dalaman OpenAI menggunakan objek berkunci `idea_ID` dan `part_NUMBER`, dengan semua part yang diminta diwajibkan oleh Structured Outputs. Schema dibina semula untuk retry supaya hanya part belum sah dijana, menggunakan nombor asal dan konteks cerita penuh. Respons kepada frontend kekal `ideas: [{id, dialogues}]`.
+
+Julat kekal 15–25 perkataan. Selain semakan server, schema dialog menggunakan corak 15–25 token berjarak untuk model biasa; model fine-tuned menggunakan semakan server kerana `pattern` tidak disokong. Tanda baca bersendirian masih ditolak oleh pengiraan perkataan server. Schema tidak menjamin kesesuaian makna; arahan produk, scene dan kesinambungan cerita kekal diperlukan.
+
+Pengesahan pembaikan ini: 12 ujian backend simulasi serta semakan deployment/sintaks lulus. Ujian pada production sebelum pembaikan berjaya untuk satu part tetapi gagal untuk kumpulan enam idea kasut × empat part; pengesahan OpenAI sebenar bagi schema baharu masih perlu dibuat pada deployment yang mengandungi perubahan ini. Kunci Vercel sedia ada dikekalkan.
+
 1. Extract ZIP. Upload **semua fail dan folder dalam `planny3`**, termasuk `api/`, ke repository anda. Jangan upload ZIP sahaja.
 2. Vercel Root Directory mesti menunjuk ke folder yang mengandungi `index.html`, `package.json`, `vercel.json` dan `api/`.
 3. Framework Preset: **Other**, Node.js **22.x**. Kekalkan konfigurasi `builds` yang disertakan. Jangan campur dengan `functions`. Ia menetapkan binaan static dan Node Function secara eksplisit seperti projek asal.

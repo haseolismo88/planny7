@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import OpenAI from 'openai';
-import handler,{createHandler,words,signature,validate,checkOutput} from '../api/generate.js';
+import handler,{createHandler,words,signature,validate,checkOutput,outputSchema} from '../api/generate.js';
 const line='Korang nak sambal rangup untuk nasi panas hari ni, tengok pilihan ni dulu dan semak detail sebelum beli.';
 const body={product:{product:'Sambal',benefit:'Rangup',goal:'branding'},ideas:[{id:1,day:1,ideaNumber:1,duration:8,style:'UGC',voice:'female',engine:'Google Flow',storyline:'Hook → detail → CTA',parts:[{scene:'Show the product',stage:'Hook'}]}],avoid:[]};
 function response(){return {headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(v){this.data=v;return this;}};}
@@ -56,6 +56,37 @@ test('real official SDK serializes the Responses API request and parses its resp
 });
 
 const makeLine=(n,id=1)=>Array.from({length:n},(_,i)=>i===0?'idea'+id:'kata'+i).join(' ');
+test('schema requires exact original idea/part identities and 15–25 whitespace tokens',()=>{
+ const input=validate({...body,ideas:[{...body.ideas[0],id:42,duration:24,parts:[{scene:'A'},{scene:'B'},{scene:'C'}]}]});
+ input.ideas[0].parts=input.ideas[0].parts.filter(p=>p.number!==2);
+ const schema=outputSchema(input);
+ assert.deepEqual(schema.properties.ideas.required,['idea_42']);
+ const parts=schema.properties.ideas.properties.idea_42;
+ assert.deepEqual(parts.required,['part_1','part_3']);
+ assert.equal(parts.additionalProperties,false);
+ const pattern=new RegExp(parts.properties.part_3.pattern);
+ for(const n of [14,15,20,25,26])assert.equal(pattern.test(makeLine(n)),n>=15&&n<=25);
+ assert.equal(outputSchema(input,'ft:custom').properties.ideas.properties.idea_42.properties.part_1.pattern,undefined);
+});
+test('keyed output preserves scene mapping and repairs only invalid dialogue with full context',async()=>{
+ const key=process.env.OPENAI_API_KEY;process.env.OPENAI_API_KEY='test-only';
+ try{
+  const payload={...body,ideas:[{...body.ideas[0],id:42,duration:24,parts:[{scene:'A'},{scene:'B'},{scene:'C'}]}]};
+  let calls=0;
+  const result=await run(fake(async request=>{
+   calls++;const input=JSON.parse(request.input);
+   const fields=request.text.format.schema.properties.ideas.properties.idea_42.required;
+   if(calls===1){assert.deepEqual(fields,['part_1','part_2','part_3']);return {status:'completed',output_text:JSON.stringify({ideas:{idea_42:{part_3:makeLine(25,'c'),part_1:makeLine(15,'a'),part_2:'too short'}}})};}
+   assert.deepEqual(fields,['part_2']);
+   assert.deepEqual(input.ideas[0].parts.map(p=>p.number),[2]);
+   assert.deepEqual(input.ideas[0].contextParts.map(p=>p.scene),['A','B','C']);
+   assert.equal(input.ideas[0].contextParts[0].dialogue,makeLine(15,'a'));
+   return {status:'completed',output_text:JSON.stringify({ideas:{idea_42:{part_2:makeLine(20,'b')}}})};
+  }),{body:payload});
+  assert.equal(result.code,200);assert.equal(calls,2);
+  assert.deepEqual(result.data.ideas[0].dialogues,[makeLine(15,'a'),makeLine(20,'b'),makeLine(25,'c')]);
+ }finally{if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
+});
 test('accept 15–25 words and reject 14/26, nonstrings and exact duplicates',()=>{
  const input=validate(body);
  for(const n of [14,15,18,22,25,26])assert.equal(checkOutput({ideas:[{id:1,dialogues:[makeLine(n)]}]},input)===null,n>=15&&n<=25);
