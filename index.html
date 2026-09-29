@@ -1293,13 +1293,13 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
         return {name:p.product,image:`Create one premium vertical 9:16 product image, suitable as the first frame of a sales video.\n\n${facts}\n\nPRODUCT LOCK: ${lock}\n\nCOMPOSITION: Feature this single product prominently in ${scenes}. Eye-level three-quarter close-up, uncluttered composition, product fully visible and sharp, believable scale, subtle background separation. Use supplied appearance details only.\n\nQUALITY: ${quality}`,video:`Create an 8–10 second vertical 9:16 product video for ${engine}.\n\n${facts}\n\nPRODUCT LOCK: ${lock}\nIf using the generated image as a starting frame, maintain its exact product identity, layout and lighting.\n\nSHOT: One continuous close-up in ${scenes}. 0–2s: reveal the product with a gentle camera push-in. 2–6s: slow lateral movement shows visible packaging or texture; demonstrate only explicitly supplied, physically plausible features. 6–10s: settle on a clear hero view with product fully visible. No transformations or unverified before/after results.\n\nAUDIO: One relaxed Malaysian creator voice, natural KL Malay pronunciation. Speak exactly: “Korang, tengok produk ni dulu. Perhatikan detail dia. Kalau rasa sesuai, boleh semak maklumat sebelum beli.” No other dialogue. Soft room ambience; no overpowering music. If speaker is visible, accurate lip-sync.\n\nQUALITY: ${quality}`};
       }
 
-      function klAudio(dialogue,voice){return `${voice}\nDIALOGUE WORD COUNT: ${dialogue.words} words (space-separated; punctuation is not a word). Use 17–20 spoken words per 8-second part.\nDIALOGUE — SPEAK EXACTLY, not a reference; actually speak verbatim in natural conversational Malaysian Malay, KL slang: “${dialogue.text}”\nVOICE: Relaxed, fluent KL pronunciation; brisk but natural 2.1–2.5 words per second. Fit the complete line into 8 seconds. Do not add greetings, extra CTA, filler speech, overlapping voices or ad-libs. Do not speak the instructions, labels, product facts or word count. Accurate lip-sync when the speaker is visible. Retain this exact spoken line without shortening or expanding it.`;}
+      function klAudio(dialogue,voice){return `${voice}\nDIALOGUE WORD COUNT: ${dialogue.words} words (space-separated; punctuation is not a word). Aim for 18–22 spoken words per 8-second part; 15–25 words are accepted.\nDIALOGUE — SPEAK EXACTLY, not a reference; actually speak verbatim in natural conversational Malaysian Malay, KL slang: “${dialogue.text}”\nVOICE: Relaxed, fluent KL pronunciation; brisk but natural 2.1–2.5 words per second. Fit the complete line into 8 seconds. Do not add greetings, extra CTA, filler speech, overlapping voices or ad-libs. Do not speak the instructions, labels, product facts or word count. Accurate lip-sync when the speaker is visible. Retain this exact spoken line without shortening or expanding it.`;}
 
 
       // PLANNY PROCEDURAL PRODUCT-AWARE DIALOGUE ENGINE V3.
       // Local, deterministic composition. Banks contain clauses, never full scripts.
       function dialogueWordCount(text){return String(text).trim().split(/\s+/u).filter(x=>/[\p{L}\p{N}]/u.test(x)).length;}
-      function validDialogueCount(n){return n>=17&&n<=20;}
+      function validDialogueCount(n){return n>=15&&n<=25;}
       function dialogueSignature(text){return String(text).normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
       function seededRandom(seed){let x=seed>>>0;return ()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
       function shuffled(items,r){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -2084,7 +2084,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
       try{const o=JSON.parse(localStorage.getItem(OPTIONS_KEY));if(o){videoOptions.styles=Array.isArray(o.styles)?videoStyles.filter(t=>o.styles.includes(t[0])).map(t=>t[0]):[];videoOptions.duration=[8,16,24,32,40,48,56].includes(o.duration)?o.duration:8;videoOptions.voice=o.voice==='male'?'male':'female';}}catch(_){}
       $('batchGenerate').parentElement.insertAdjacentHTML('beforebegin',`<fieldset class="batch-options"><legend>Gaya video</legend><p>Pilih gaya yang anda suka. Boleh pilih lebih daripada satu, atau biarkan automatik.</p><div class="batch-style-grid">${videoStyles.map(t=>`<label class="batch-style"><input type="checkbox" name="batchStyle" value="${t[0]}" ${videoOptions.styles.includes(t[0])?'checked':''}><span>${esc(t[1])}</span></label>`).join('')}</div><div class="batch-tools"><button type="button" class="ghost" id="batchStyleAll">Pilih semua 15</button><button type="button" class="ghost" id="batchStyleAuto">Guna automatik</button></div><label for="batchDuration">Berapa panjang setiap video?</label><select id="batchDuration">${[8,16,24,32,40,48,56].map(n=>`<option value="${n}" ${videoOptions.duration===n?'selected':''}>${n} saat · ${n/8} part</option>`).join('')}</select><p id="batchOptionNote" role="status"></p></fieldset>`);
       function optionsChanged(){videoOptions={styles:Array.from(document.querySelectorAll('input[name="batchStyle"]:checked'),e=>e.value),duration:Number($('batchDuration').value),voice:$('batchVoice').value==='male'?'male':'female'};batchInvalidate();try{localStorage.setItem(OPTIONS_KEY,JSON.stringify(videoOptions));}catch(_){showToast('Pilihan kekal untuk sesi ini sahaja.');}optionsNote();}
-      function optionsNote(){$('batchOptionNote').textContent=`${videoOptions.styles.length?videoOptions.styles.length+' gaya dipilih':'4 gaya automatik'} · Suara ${videoOptions.voice==='male'?'lelaki':'wanita'} · ${videoOptions.duration/8} part × 8 saat. Setiap part ada prompt gambar, prompt video dan dialog KL 17–20 perkataan.`;}
+      function optionsNote(){$('batchOptionNote').textContent=`${videoOptions.styles.length?videoOptions.styles.length+' gaya dipilih':'4 gaya automatik'} · Suara ${videoOptions.voice==='male'?'lelaki':'wanita'} · ${videoOptions.duration/8} part × 8 saat. Setiap part ada prompt gambar, prompt video dan dialog KL 15–25 perkataan.`;}
       document.querySelectorAll('input[name="batchStyle"]').forEach(e=>e.addEventListener('change',optionsChanged));
       $('batchDuration').onchange=optionsChanged;
       $('batchVoice').value=videoOptions.voice;
@@ -2418,7 +2418,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
       const aiCache=new Map();
       const aiStatus=document.createElement('p');aiStatus.setAttribute('role','status');aiStatus.setAttribute('aria-live','polite');
       $('batchGenerate').after(aiStatus);
-      const aiInfo=document.createElement('p');aiInfo.className='simple-hint';aiInfo.textContent='OpenAI jana dialog dalam kumpulan 10 idea: 120 idea setiap set. Setiap part 8 saat, 17–20 perkataan. Jika AI gagal, hasil templat tempatan akan dilabel. Tekan jana semula dengan input sama untuk sambung AI. Sejarah disimpan dalam browser ini.';aiStatus.after(aiInfo);aiStatus.style.flexBasis='100%';aiInfo.style.flexBasis='100%';
+      const aiInfo=document.createElement('p');aiInfo.className='simple-hint';aiInfo.textContent='OpenAI jana dialog dalam kumpulan 10 idea: 120 idea setiap set. Setiap part 8 saat, 15–25 perkataan. Jika AI gagal, hasil templat tempatan akan dilabel. Tekan jana semula dengan input sama untuk sambung AI. Sejarah disimpan dalam browser ini.';aiStatus.after(aiInfo);aiStatus.style.flexBasis='100%';aiInfo.style.flexBasis='100%';
       let aiBusy=false,aiDBPromise,aiStorageWarning=false;
       const aiMemory=new Map();
       function aiDB(){return aiDBPromise||=new Promise((resolve,reject)=>{const req=indexedDB.open('planny-openai-v1',1);req.onblocked=()=>reject(Error('Storan browser sibuk.'));req.onupgradeneeded=()=>req.result.createObjectStore('products');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(Error('Browser tidak membenarkan simpanan hasil. Benarkan storan dahulu.'));});}
@@ -2434,8 +2434,8 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
       }
       const aiSignature=text=>text.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,'').replace(/\s+/g,' ').trim();
       const aiWords=text=>text.trim().split(/\s+/u).filter(x=>/[\p{L}\p{N}]/u.test(x)).length;
-      const aiValidDialogue=text=>typeof text==='string'&&aiWords(text)>=17&&aiWords(text)<=20;
-      const aiErrors={MISSING_API_KEY:'OPENAI_API_KEY belum ditetapkan di Vercel.',OPENAI_AUTH:'API key OpenAI tidak sah.',OPENAI_MODEL_ACCESS:'Model OpenAI tidak tersedia atau akaun tiada akses.',OPENAI_RATE_LIMIT:'Kredit atau rate limit OpenAI telah dicapai.',OPENAI_TIMEOUT:'OpenAI mengambil masa terlalu lama. Cuba semula.',INVALID_AI_OUTPUT:'Sebahagian dialog tidak menepati format 17–20 perkataan. Cuba semula.',OPENAI_UNAVAILABLE:'OpenAI tidak dapat dihubungi sekarang.'};
+      const aiValidDialogue=text=>typeof text==='string'&&aiWords(text)>=15&&aiWords(text)<=25;
+      const aiErrors={MISSING_API_KEY:'OPENAI_API_KEY belum ditetapkan di Vercel.',OPENAI_AUTH:'API key OpenAI tidak sah.',OPENAI_MODEL_ACCESS:'Model OpenAI tidak tersedia atau akaun tiada akses.',OPENAI_RATE_LIMIT:'Kredit atau rate limit OpenAI telah dicapai.',OPENAI_TIMEOUT:'OpenAI mengambil masa terlalu lama. Cuba semula.',INVALID_AI_OUTPUT:'Sebahagian dialog tidak menepati format 15–25 perkataan. Cuba semula.',OPENAI_UNAVAILABLE:'OpenAI tidak dapat dihubungi sekarang.'};
       function aiErrorMessage(error){return error.name==='TimeoutError'||error.name==='AbortError'?aiErrors.OPENAI_TIMEOUT:error.message||aiErrors[error.code]||aiErrors.OPENAI_UNAVAILABLE;}
       const aiBaseExpanded=batchExpanded;
       batchExpanded=function(p,day,slot,engine,opts){
@@ -2445,7 +2445,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
         return idea;
       };
       function aiFill(context,lines,source='openai'){
-        const parts=context.parts.map((part,i)=>({...part,dialogue:lines[i],wordCount:aiWords(lines[i]),note:source==='openai'?'Dijana OpenAI · disemak 17–20 perkataan':'Templat tempatan · bukan OpenAI',video:part.video.replaceAll('__PLANNY_AI_DIALOGUE__',()=>lines[i]).replace(/DIALOGUE WORD COUNT: \d+ words/g,'DIALOGUE WORD COUNT: '+aiWords(lines[i])+' words')}));
+        const parts=context.parts.map((part,i)=>({...part,dialogue:lines[i],wordCount:aiWords(lines[i]),note:source==='openai'?'Dijana OpenAI · disemak 15–25 perkataan':'Templat tempatan · bukan OpenAI',video:part.video.replaceAll('__PLANNY_AI_DIALOGUE__',()=>lines[i]).replace(/DIALOGUE WORD COUNT: \d+ words/g,'DIALOGUE WORD COUNT: '+aiWords(lines[i])+' words')}));
         return {...context,source,parts,image:parts.map(t=>`PART ${t.number} · ${t.start}–${t.end}s\n${t.image}`).join('\n\n================\n\n'),video:parts.map(t=>`PART ${t.number} · ${t.start}–${t.end}s\n${t.video}`).join('\n\n================\n\n')};
       }
       async function aiRequest(product,contexts,avoid){
@@ -2484,7 +2484,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
             const batchUsed=new Set(),duplicates=[];
             data.ideas.forEach((idea,i)=>{
               if(!idea||idea.id!==contexts[i].variationId||!Array.isArray(idea.dialogues)||idea.dialogues.length!==contexts[i].parts.length)throw Error('Part AI tidak lengkap. Cuba semula.');
-              idea.dialogues.forEach(line=>{if(!aiValidDialogue(line))throw Error('Dialog AI mesti antara 17–20 perkataan. Cuba semula.');const sig=aiSignature(line);if(used.has(sig)||batchUsed.has(sig))duplicates.push(line);batchUsed.add(sig);});
+              idea.dialogues.forEach(line=>{if(!aiValidDialogue(line))throw Error('Dialog AI mesti antara 15–25 perkataan. Cuba semula.');const sig=aiSignature(line);if(used.has(sig)||batchUsed.has(sig))duplicates.push(line);batchUsed.add(sig);});
             });
             if(duplicates.length)avoid=[...avoid,...duplicates].slice(-120);else accepted=data.ideas;
           }
@@ -2533,7 +2533,7 @@ body.simple-products{background:#fff}.simple-products .app{width:min(calc(100% -
           }
           batchSnapshot=productLibrary.map(p=>({...p}));batchOutputOptions=opts;batchOutputEngine=engine;
           renderSavedProducts();batchSave();const fallbacks=productLibrary.filter(p=>p.__fallback);
-          const status=fallbacks.length?fallbacks.map(p=>p.product+': '+(p.__aiError||'Hasil templat tempatan digunakan.')).join(' ')+' Part bertanda templat tempatan bukan daripada OpenAI.':'Siap. Dialog OpenAI lulus semakan 17–20 perkataan dan tiada ayat sama dalam sejarah browser ini.';
+          const status=fallbacks.length?fallbacks.map(p=>p.product+': '+(p.__aiError||'Hasil templat tempatan digunakan.')).join(' ')+' Part bertanda templat tempatan bukan daripada OpenAI.':'Siap. Dialog OpenAI lulus semakan 15–25 perkataan dan tiada ayat sama dalam sejarah browser ini.';
           aiStatus.textContent=status;
           const notice=document.createElement('p');notice.className='simple-hint';notice.setAttribute('role','status');notice.textContent=status+(aiStorageWarning?' Hasil sesi ini sahaja; simpanan browser tidak tersedia. Muat turun sebelum tutup.':'');$('batchResults').prepend(notice);easyShow(4);
         }catch(e){aiStatus.textContent=(e.name==='TimeoutError'?'Sambungan terhenti. Tekan semula untuk sambung.':e.message)+' Kemajuan yang telah disimpan dikekalkan.';showToast('Janaan belum lengkap. Lihat mesej di bawah butang.');}
